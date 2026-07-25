@@ -1,0 +1,774 @@
+/* =====================================================================
+   Gear Second Landing — tokens
+   Straw-hat gold, Gear Second red steam, deep space navy.
+===================================================================== */
+:root {
+  --void: #07070d;
+  --ember: #ff4d24;
+  --ember-deep: #c81f0a;
+  --gold: #ffc247;
+  --core: #fff4e8;
+  --paper: #f2ece6;
+
+  --disp: 'Anton', 'Bebas Neue', sans-serif;
+  --beb: 'Bebas Neue', sans-serif;
+  --mono: 'Space Mono', monospace;
+  /* CJK stack: Shippori Mincho first, then platform fallbacks */
+  --kanji: 'Shippori Mincho', 'Noto Sans JP', 'Hiragino Mincho ProN', 'Yu Mincho', 'MS Mincho',
+    serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--void);
+  color: var(--paper);
+  font-family: var(--mono);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+img {
+  display: block;
+}
+
+::selection {
+  background: var(--ember);
+  color: var(--void);
+}
+
+/* =====================================================================
+   Stage
+===================================================================== */
+.exp {
+  position: relative;
+  width: 100%;
+}
+
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  will-change: transform;
+  background:
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 122, 69, 0.12), transparent 60%),
+    radial-gradient(90% 60% at 50% 110%, rgba(255, 77, 36, 0.1), transparent 66%),
+    linear-gradient(180deg, #0b0912 0%, #07070d 55%, #050409 100%);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* depth order: bg → stars → clouds → kanji → hat → luffy → fx */
+.layer--bg {
+  z-index: 0;
+}
+.layer--stars {
+  z-index: 1;
+  opacity: 0.9;
+}
+.layer--clouds {
+  z-index: 2;
+}
+.layer--kanji {
+  z-index: 3;
+}
+.layer--hat {
+  z-index: 4;
+}
+.layer--luffy {
+  z-index: 5;
+}
+.layer--fx {
+  z-index: 6;
+}
+
+/* React Bits Particles fills its container */
+.particles-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* =====================================================================
+   Painted backdrop
+   bg.jpg sits heavily faded behind the whole scene; on contact it is
+   replaced by transition.jpg (the Gear Second plate).
+===================================================================== */
+.bgplate {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform-origin: 50% 45%;
+  will-change: transform, opacity;
+}
+
+.bgplate--base {
+  background-image: url('/images/bg.jpg');
+  /* faded right back — atmosphere, not artwork */
+  opacity: 0.3;
+  filter: saturate(0.75) contrast(1.05) brightness(0.72);
+}
+
+.bgplate--shift {
+  background-image: url('/images/transition.jpg');
+  opacity: 0;
+  filter: saturate(1.15) contrast(1.1) brightness(0.85);
+}
+
+/* Sits above both plates (inside .layer--bg) and sinks the edges into the
+   void so the artwork never fights the foreground. */
+.bgplate__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(72% 62% at 50% 48%, transparent 0%, rgba(5, 4, 10, 0.55) 78%, rgba(5, 4, 10, 0.92) 100%),
+    linear-gradient(180deg, rgba(7, 7, 13, 0.55) 0%, transparent 30%, transparent 62%, rgba(5, 4, 9, 0.8) 100%);
+}
+
+/* =====================================================================
+   Clouds / nebula (far parallax)
+===================================================================== */
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  /* The radial gradients are already soft, so a huge blur is mostly wasted GPU.
+     24px keeps the look; will-change promotes each to its own layer so the blur
+     is rasterised once and only re-composited as it drifts. */
+  filter: blur(24px);
+  mix-blend-mode: screen;
+  opacity: 0.45;
+  will-change: transform;
+}
+.cloud--1 {
+  left: -10%;
+  top: 6%;
+  width: 62vw;
+  height: 42vh;
+  background: radial-gradient(ellipse, rgba(120, 80, 200, 0.5), transparent 70%);
+  animation: drift 42s linear infinite;
+}
+.cloud--2 {
+  right: -8%;
+  top: 40%;
+  width: 54vw;
+  height: 38vh;
+  background: radial-gradient(ellipse, rgba(200, 60, 40, 0.42), transparent 70%);
+  animation: drift 56s linear infinite reverse;
+}
+.cloud--3 {
+  left: 12%;
+  bottom: 2%;
+  width: 72vw;
+  height: 42vh;
+  background: radial-gradient(ellipse, rgba(40, 60, 130, 0.5), transparent 72%);
+  animation: drift 68s linear infinite;
+}
+@keyframes drift {
+  0% {
+    transform: translateX(-4%);
+  }
+  50% {
+    transform: translateX(6%);
+  }
+  100% {
+    transform: translateX(-4%);
+  }
+}
+
+/* =====================================================================
+   3D hat canvas
+===================================================================== */
+.scene3d {
+  position: absolute;
+  inset: 0;
+}
+.scene3d canvas {
+  display: block;
+}
+
+/* =====================================================================
+   Falling kanji
+===================================================================== */
+.kanji {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Background decoration — never hit-tested. Also stops a stray hover from
+     kicking the near-glyph glitch animations on mid-scroll. */
+  pointer-events: none;
+}
+
+.kanji__item {
+  position: absolute;
+  top: 0;
+  font-family: var(--kanji);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  will-change: transform, opacity;
+  /* depth opacity is baked into the colour; GSAP drives element opacity on top */
+  color: rgba(255, 205, 150, var(--kanji-opacity, 0.5));
+  text-shadow:
+    0 0 18px rgba(255, 122, 69, 0.4),
+    0 0 46px rgba(255, 60, 20, 0.18);
+}
+
+/* The glyph itself: plain Japanese text. The "cool" comes from a cheap
+   transform/opacity sway only — no animated filter or background-clip, since
+   those repaint every frame and dragged the scroll. text-shadow is a static
+   glow (rasterised once), depth alpha inherits from the wrapper's
+   --kanji-opacity so far glyphs stay dim. Kept on the inner span so it never
+   collides with the GSAP fall transform on the .kanji__item wrapper. */
+.kanji__glyph {
+  display: inline-block;
+  color: rgba(255, 205, 150, var(--kanji-opacity, 0.6));
+  text-shadow:
+    0 0 18px rgba(255, 122, 69, 0.4),
+    0 0 46px rgba(255, 60, 20, 0.18);
+  animation: kanjiSway 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* a gentle drift + breath — transform/opacity only, GPU-composited, no repaint */
+@keyframes kanjiSway {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: translateY(-0.06em) scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* =====================================================================
+   Luffy
+===================================================================== */
+.luffy {
+  position: absolute;
+  inset: 0;
+}
+
+.luffy__fog {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(48% 42% at 50% 62%, rgba(255, 77, 36, 0.22), transparent 70%),
+    radial-gradient(70% 60% at 50% 70%, rgba(20, 10, 30, 0.7), transparent 75%);
+}
+
+.luffy__inner {
+  position: absolute;
+  will-change: transform, opacity;
+}
+
+.luffy__img,
+.luffy__gear2,
+.luffy__heat {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  user-select: none;
+}
+
+.luffy__img {
+  opacity: 0;
+  /* Only opacity/transform are animated — no per-frame filter repaint — so the
+     crossfade and entry stay smooth. */
+  will-change: opacity, transform;
+}
+
+.luffy__gear2 {
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* Same PNG, blown out red and screened back over him: the alpha channel masks
+   the Gear Second heat to his exact silhouette for free. */
+.luffy__heat {
+  opacity: 0;
+  mix-blend-mode: screen;
+  filter: brightness(2.6) saturate(3) hue-rotate(-14deg) blur(3px);
+  pointer-events: none;
+}
+
+/* Constant thunder over the transformed figure. Wrapper opacity is the
+   timeline's gate (0 until he transforms); the inner img strobes on a fixed
+   1s clock so an electric-white crack keeps flashing across his silhouette. */
+.luffy__thunder {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.luffy__thunder-flash {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0;
+  mix-blend-mode: screen;
+  /* blown-out HEAVY RED — a molten Gear Second lightning crack, not white/blue.
+     Only opacity animates per frame; the filter is static so no per-frame
+     reblur. */
+  filter: brightness(3.6) saturate(6) hue-rotate(-12deg) contrast(1.7)
+    drop-shadow(0 0 26px rgba(255, 40, 10, 0.9)) blur(1px);
+  animation: gear2Thunder 1s linear infinite;
+  will-change: opacity;
+}
+
+/* one hard double-crack of red lightning per second, then dark until the next */
+@keyframes gear2Thunder {
+  0% {
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  6% {
+    opacity: 0.2;
+  }
+  9% {
+    opacity: 0.9;
+  }
+  16% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luffy__thunder-flash {
+    animation: none;
+  }
+}
+
+/* =====================================================================
+   Impact FX
+===================================================================== */
+.fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx__canvas,
+.fx__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.fx__svg {
+  mix-blend-mode: screen;
+  overflow: visible;
+}
+
+.fx__svg path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fx__flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    60% 50% at 50% 45%,
+    #fff 0%,
+    #ffd0b0 30%,
+    rgba(255, 90, 40, 0.5) 60%,
+    transparent 85%
+  );
+}
+
+/* shockwave ring punched out of the contact point */
+.fx__shock {
+  position: absolute;
+  opacity: 0;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%) scale(0);
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    transparent 56%,
+    rgba(255, 210, 170, 0.55) 68%,
+    rgba(255, 90, 40, 0.9) 76%,
+    rgba(255, 60, 20, 0.25) 86%,
+    transparent 94%
+  );
+}
+
+/* aftermath: lingering glow pooled around him */
+.aftermath {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(46% 40% at 50% 58%, rgba(255, 77, 36, 0.28), transparent 72%);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0.35;
+  background: radial-gradient(ellipse at center, transparent 38%, rgba(3, 2, 8, 0.9) 100%);
+}
+
+/* =====================================================================
+   Ambient thunder — real red lightning bolts strike at intervals
+   (geometry + opacity driven by AmbientThunder.jsx on a clock)
+===================================================================== */
+.thunder {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+/* the bolts themselves */
+.thunder__svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  mix-blend-mode: screen;
+}
+.thunder__svg path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* red white-out the strike throws across the whole scene */
+.thunder__flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    75% 60% at 50% 30%,
+    rgba(255, 90, 50, 0.9) 0%,
+    rgba(255, 40, 20, 0.5) 40%,
+    transparent 78%
+  );
+  will-change: opacity;
+}
+
+/* molten red bloom where a bolt hits */
+.thunder__hit {
+  position: absolute;
+  width: 42vh;
+  height: 42vh;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: radial-gradient(
+    circle,
+    rgba(255, 220, 200, 0.9) 0%,
+    rgba(255, 60, 30, 0.6) 22%,
+    transparent 62%
+  );
+  will-change: opacity;
+}
+
+/* =====================================================================
+   「二段」 impact stamp
+===================================================================== */
+.stamp {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.stamp__jp {
+  font-family: var(--kanji);
+  font-weight: 800;
+  font-size: clamp(72px, 17vw, 260px);
+  line-height: 0.86;
+  color: var(--core);
+  text-shadow:
+    0 0 40px rgba(255, 120, 60, 0.9),
+    0 0 120px rgba(255, 60, 20, 0.7),
+    0 10px 60px rgba(0, 0, 0, 0.6);
+}
+
+.stamp__en {
+  font-family: var(--beb);
+  font-size: clamp(11px, 1.5vw, 18px);
+  letter-spacing: 0.62em;
+  text-indent: 0.62em;
+  color: var(--ember);
+}
+
+/* =====================================================================
+   Vertical tategaki rails
+===================================================================== */
+.rail {
+  position: absolute;
+  top: 50%;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  writing-mode: vertical-rl;
+  font-family: var(--kanji);
+  font-size: clamp(10px, 1.05vw, 15px);
+  letter-spacing: 0.5em;
+  color: rgba(255, 200, 150, 0.34);
+  text-shadow: 0 0 20px rgba(255, 90, 40, 0.35);
+}
+.rail--left {
+  left: 26px;
+}
+.rail--right {
+  right: 26px;
+}
+
+.rail__jp--dim {
+  color: rgba(242, 236, 230, 0.2);
+  letter-spacing: 0.42em;
+}
+
+.rail__dot {
+  flex: none;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 10px var(--ember);
+}
+
+/* =====================================================================
+   Hero / UI
+===================================================================== */
+.hero {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 46%;
+  z-index: 9;
+  transform: translateY(-50%);
+  text-align: center;
+  padding: 0 20px;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+.hero__kanji {
+  display: block;
+  font-family: var(--kanji);
+  font-weight: 800;
+  font-size: clamp(26px, 5vw, 56px);
+  color: var(--gold);
+  letter-spacing: 0.14em;
+  margin-bottom: 10px;
+  text-shadow:
+    0 0 30px rgba(255, 194, 71, 0.5),
+    0 0 70px rgba(255, 77, 36, 0.25);
+}
+
+/* BlurText renders a <p style="display:flex"> — centre its letters */
+.hero__title {
+  justify-content: center;
+  font-family: var(--disp);
+  font-size: clamp(48px, 12vw, 148px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: var(--paper);
+  text-transform: uppercase;
+  text-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.75),
+    0 0 70px rgba(255, 77, 36, 0.28);
+}
+
+.hero__sub {
+  margin-top: 16px;
+  font-size: 10.5px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(242, 236, 230, 0.55);
+}
+
+/* 鼓動 ・ 蒸気 ・ 解放 — the three beats of the transformation */
+.hero__jp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+  font-family: var(--kanji);
+  font-size: clamp(12px, 1.5vw, 17px);
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  color: rgba(255, 194, 71, 0.72);
+}
+.hero__jp i {
+  flex: none;
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 77, 36, 0.8), transparent);
+}
+
+.cue {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  z-index: 9;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.cue__jp {
+  font-family: var(--kanji);
+  font-size: 11px;
+  letter-spacing: 0.36em;
+  text-indent: 0.36em;
+  color: rgba(255, 194, 71, 0.6);
+}
+.cue__text {
+  font-family: var(--beb);
+  font-size: 13px;
+  letter-spacing: 0.42em;
+}
+.cue__arrow {
+  font-size: 15px;
+  color: var(--ember);
+}
+
+.hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 24px;
+  pointer-events: none;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(242, 236, 230, 0.45);
+}
+.hud--top {
+  top: 0;
+}
+.hud--bottom {
+  bottom: 0;
+}
+.hud b {
+  color: var(--ember);
+  font-weight: 400;
+}
+.hud__jp {
+  font-family: var(--kanji);
+  font-style: normal;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.hud__jp--big {
+  font-size: 13px;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  text-shadow: 0 0 18px rgba(255, 194, 71, 0.45);
+}
+
+/* film grain */
+.grain {
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: 11;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 7s steps(8) infinite;
+}
+@keyframes grain {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-5%, -6%);
+  }
+  40% {
+    transform: translate(4%, -4%);
+  }
+  60% {
+    transform: translate(-4%, 6%);
+  }
+  80% {
+    transform: translate(6%, 3%);
+  }
+}
+
+/* =====================================================================
+   Responsive + reduced motion
+===================================================================== */
+@media (max-width: 760px) {
+  .hud {
+    padding: 12px 14px;
+    font-size: 8.5px;
+  }
+  .hero {
+    top: 42%;
+  }
+  /* the tategaki rails need margin they don't have on a phone */
+  .rail {
+    display: none;
+  }
+  .hud__jp--big {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grain,
+  .cloud {
+    animation: none;
+  }
+}
